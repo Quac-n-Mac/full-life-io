@@ -17614,7 +17614,7 @@ ${e}`);
       var tasks = [];
       var total = 0;
       m.parts.forEach(function(p, pi){
-        p.chunks.forEach(function(c, ci){ tasks.push({pi:pi, ci:ci, file:c}); });
+        p.chunks.forEach(function(c, ci){ tasks.push({pi:pi, ci:ci, file:c, base:(p.name==='zip'?'play-test/':'play/')}); });
         total += p.size;
       });
       var slots = m.parts.map(function(p){ return new Array(p.chunks.length); });
@@ -17623,7 +17623,7 @@ ${e}`);
         while (tasks.length && !wrong) {
           var t = tasks.shift();
           if (!t) break;
-          var buf = await (await fetch('play/' + t.file)).arrayBuffer();
+          var buf = await (await fetch(t.base + t.file)).arrayBuffer();
           var iv = new Uint8Array(buf, 0, 12);
           var plain;
           try { plain = await crypto.subtle.decrypt({name:'AES-GCM', iv:iv}, key, buf.slice(12)); }
