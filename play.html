@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Full-Life</title>
 <style>
   html,body{margin:0;height:100%;background:#111;color:#eee;font-family:system-ui,sans-serif}
@@ -17671,10 +17671,65 @@ ${e}`);
       document.getElementById('gate').style.display = 'none';
       var c = document.getElementById('canvas');
       c.style.display = 'block';
-      function sizeCanvas(){ c.width = window.innerWidth; c.height = window.innerHeight; }
-      sizeCanvas();
-      window.addEventListener('resize', sizeCanvas);
+        window.HL_TOUCH_CFG = `
+touch_joy_texture "touch_default/joy"
+touch_move_indicator "1"
+touch_addbutton "fire" "touch_default/shoot" "+attack" 0.840000 0.520000 0.980000 0.920000 255 255 255 255 6 1
+touch_addbutton "jump" "touch_default/jump" "+jump" 0.700000 0.640000 0.800000 0.880000 255 255 255 255 6 1
+touch_addbutton "crouch" "touch_default/tduck" "+duck" 0.700000 0.360000 0.780000 0.580000 255 255 255 255 6 1
+touch_addbutton "reload" "touch_default/reload" "+reload" 0.590000 0.480000 0.670000 0.680000 255 255 255 255 6 1
+touch_addbutton "use" "touch_default/use" "+use" 0.590000 0.240000 0.670000 0.440000 255 255 255 255 6 1
+touch_addbutton "nextw" "touch_default/next_weap" "invnext" 0.900000 0.040000 0.960000 0.160000 255 255 255 255 6 1
+touch_addbutton "prevw" "touch_default/prev_weap" "invprev" 0.820000 0.040000 0.880000 0.160000 255 255 255 255 6 1
+touch_addbutton "menu" "touch_default/menu" "escape" 0.020000 0.030000 0.080000 0.130000 255 255 255 255 6 1
+`;
+      function fitCanvas(){
+        var c = document.getElementById('canvas');
+        var w = window.innerWidth, h = window.innerHeight;
+        if (document.fullscreenElement) {
+          w = document.fullscreenElement.clientWidth || w;
+          h = document.fullscreenElement.clientHeight || h;
+        }
+        if (!w || !h) { w = window.innerWidth; h = window.innerHeight; }
+        c.width = w; c.height = h;
+        c.style.width = w + 'px'; c.style.height = h + 'px';
+      }
+      window.addEventListener('resize', fitCanvas);
+      window.addEventListener('orientationchange', function(){ setTimeout(fitCanvas, 150); });
+      document.addEventListener('fullscreenchange', function(){ setTimeout(fitCanvas, 80); });
+      if (window.visualViewport) window.visualViewport.addEventListener('resize', fitCanvas);
+      window.__touchOn = false;
+      function setTouch(on){
+        window.__touchOn = on;
+        var tb = document.getElementById('touchtoggle');
+        if (tb) tb.textContent = 'Touch controls: ' + (on ? 'ON' : 'OFF');
+        try {
+          var x = window.xash;
+          if (!x) return;
+          if (on) {
+            var FS = x.em.FS;
+            try { FS.writeFile('/rodir/touch.cfg', window.HL_TOUCH_CFG); } catch(e) {}
+            try { FS.writeFile('/rodir/valve/touch.cfg', window.HL_TOUCH_CFG); } catch(e) {}
+            x.Cmd_ExecuteString('exec touch.cfg');
+          }
+          x.Cmd_ExecuteString('touch_enable ' + (on ? '1' : '0'));
+        } catch(e) { console.warn('touch setup', e); }
+      }
+      function setupTouch(){
+        var isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        if (!isTouch) return;
+        var tb = document.createElement('button');
+        tb.id = 'touchtoggle';
+        tb.type = 'button';
+        tb.textContent = 'Touch controls: OFF';
+        tb.style.cssText = 'position:fixed;top:8px;right:8px;z-index:60;padding:8px 12px;background:rgba(0,0,0,.65);color:#eee;border:1px solid #666;border-radius:8px;font:14px system-ui';
+        tb.onclick = function(){ setTouch(!window.__touchOn); };
+        document.body.appendChild(tb);
+        setTouch(true);
+      }
+      fitCanvas();
       await window.bootHL(PARTS.zip, PARTS.extras, c);
+      setupTouch();
     } catch(e) { fail(e); }
   }
   document.getElementById('go').onclick = go;
