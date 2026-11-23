@@ -30,7 +30,7 @@
   <div id="pct"></div>
   <div id="msg"></div>
 </div>
-<canvas id="c" style="display:none" oncontextmenu="event.preventDefault()"></canvas>
+<canvas id="canvas" style="display:none" oncontextmenu="event.preventDefault()"></canvas>
 <pre id="err"></pre>
 <script>
 (() => {
@@ -17669,7 +17669,7 @@ ${e}`);
       };
       pct.textContent = 'starting engine...';
       document.getElementById('gate').style.display = 'none';
-      var c = document.getElementById('c');
+      var c = document.getElementById('canvas');
       c.style.display = 'block';
       function sizeCanvas(){ c.width = window.innerWidth; c.height = window.innerHeight; }
       sizeCanvas();

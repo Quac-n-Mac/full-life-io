@@ -2,7 +2,9 @@
   "v": 1,
   "kdf": "PBKDF2-SHA256",
   "iterations": 600000,
-  "salt": "6YR/W9RWCsA6zC3D0qzyfQ==",
+  "salt": "daxmWJ4nOuwk8VzSopRDtg==",
+  "size": 356387862,
+  "sha256": "5b4c48eaa9234b71cc8c619e4ee19f5571b1a750241b29ffa0f876b81f3ae3a1",
   "chunks": [
     "data.00.bin",
     "data.01.bin",
@@ -123,7 +125,5 @@
     "data.116.bin",
     "data.117.bin",
     "data.118.bin"
-  ],
-  "size": 356387852,
-  "sha256": "fbed8e95537bebe25c42b0760b7194707f019df60520ba0ce9d1c3671917ac62"
+  ]
 }
