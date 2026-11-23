@@ -2,7 +2,7 @@
   "v": 2,
   "kdf": "PBKDF2-SHA256",
   "iterations": 600000,
-  "salt": "xJfWsxMWtCQh3l4muBPf5g==",
+  "salt": "HQmPA9eoK2v2a/WWaPjFTA==",
   "parts": [
     {
       "name": "zip",
@@ -11,7 +11,33 @@
       "chunks": [
         "zip.00.bin",
         "zip.01.bin",
-        "zip.02.bin"
+        "zip.02.bin",
+        "zip.03.bin",
+        "zip.04.bin",
+        "zip.05.bin",
+        "zip.06.bin",
+        "zip.07.bin",
+        "zip.08.bin",
+        "zip.09.bin",
+        "zip.10.bin",
+        "zip.11.bin",
+        "zip.12.bin",
+        "zip.13.bin",
+        "zip.14.bin",
+        "zip.15.bin",
+        "zip.16.bin",
+        "zip.17.bin",
+        "zip.18.bin",
+        "zip.19.bin",
+        "zip.20.bin",
+        "zip.21.bin",
+        "zip.22.bin",
+        "zip.23.bin",
+        "zip.24.bin",
+        "zip.25.bin",
+        "zip.26.bin",
+        "zip.27.bin",
+        "zip.28.bin"
       ]
     },
     {
