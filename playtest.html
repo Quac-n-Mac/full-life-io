@@ -17513,7 +17513,7 @@ ${e}`);
       module: {
         print: (t) => console.log(t),
         printErr: (t) => console.warn(t),
-        arguments: ["-windowed", "+hud_scale", "2.5", "+volume", "0.05", "-ref", soft ? "soft" : "webgl2"],
+        arguments: ["+hud_scale", "2.5", "+volume", "0.05", "-ref", soft ? "soft" : "webgl2"],
         locateFile: (path) => {
           console.log("[locateFile]", path);
           if (window.HL_LOCATE_FILE) {
@@ -17568,7 +17568,6 @@ ${e}`);
 })();
 
 </script>
-<script>
 (function(){
   var MAP = {
     'xash.wasm':'xash',
