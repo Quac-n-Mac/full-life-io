@@ -17497,10 +17497,13 @@ ${e}`);
   }
 
 
-  // hl-diag.js (v4)
+  // hl-diag.js (v5)
   window.__hlLogs = [];
+  window.__hlAlerts = [];
   window.__hlEngineExited = false;
   window.__hlCmdArmed = false;
+  window.__hlBootDone = false;
+  window.__hlPendingTouch = null;
   window.__hlShowDiag = function (why) {
     try {
       var d = document.getElementById('hldiag');
@@ -17514,17 +17517,27 @@ ${e}`);
       d.style.display = 'block';
     } catch (e) {}
   };
-  window.__hlArmPostInit = function () {
-    if (window.__hlCmdArmed) return;
-    window.__hlCmdArmed = true;
-    setTimeout(window.__hlPostInit, 12000);
+  // v5: intercept blocking dialogs so a fatal engine error is captured, not wedged
+  window.alert = function (m) {
+    m = String(m);
+    window.__hlAlerts.push(m);
+    window.__hlLogs.push('[alert] ' + m);
+    window.__hlShowDiag('engine alert: ' + m.slice(0, 300));
   };
+  window.confirm = function (m) { window.alert(m); return false; };
+  window.prompt = function (m) { window.alert(m); return null; };
+  window.addEventListener('error', function (e) {
+    window.__hlLogs.push('[onerror] ' + e.message + ' @' + (e.filename || '') + ':' + (e.lineno || 0));
+  });
+  window.addEventListener('unhandledrejection', function (e) {
+    var r = e.reason && (e.reason.message || e.reason);
+    window.__hlLogs.push('[reject] ' + r);
+  });
   window.HLLOG = function (t) {
     t = String(t);
     window.__hlLogs.push(t);
     if (window.__hlLogs.length > 400) window.__hlLogs.shift();
     try { console.log(t); } catch (e) {}
-    if (!window.__hlCmdArmed && (t.indexOf('execing') !== -1 || t.indexOf('Delta_InitFields') !== -1)) window.__hlArmPostInit();
     if (/error/i.test(t)) window.__hlShowDiag('error line in engine log');
   };
   window.HLLOGERR = function (t) { window.HLLOG(t); };
@@ -17538,24 +17551,24 @@ ${e}`);
     window.xash.Cmd_ExecuteString(s);
     return true;
   };
-  window.__hlPostInit = function () {
-    if (!window.xash || !window.xash.em) { setTimeout(window.__hlPostInit, 2000); return; }
-    try {
-      if (!window.__hlCmd('vid_fullscreen 0')) { setTimeout(window.__hlPostInit, 2000); return; }
-      setTimeout(function () {
-        try {
-          if (!window.__hlCmd('vid_restart')) return;
-          setTimeout(function () {
-            try {
-              window.__hlCmd('hud_scale 2.5');
-              window.__hlCmd('volume 0.05');
-              window.__hlCmd('exec touch.cfg');
-            } catch (e) { window.__hlShowDiag('postinit cvars: ' + e); }
-          }, 900);
-        } catch (e) { window.__hlShowDiag('postinit vid_restart: ' + e); }
-      }, 1300);
-    } catch (e) { window.__hlShowDiag('postinit: ' + e); }
+  // v5: command window opens 90s after boot completes (menu up => Cmd safe); gestures
+  // after boot also arm. Pending touch toggle flushes then.
+  window.__hlFlushTouch = function () {
+    if (window.__hlPendingTouch == null) return;
+    var on = window.__hlPendingTouch;
+    if (on) window.__hlCmd('exec touch.cfg');
+    window.__hlCmd('touch_enable ' + (on ? '1' : '0'));
+    window.__hlPendingTouch = null;
   };
+  window.__hlMarkBooted = function () {
+    if (window.__hlBootDone) return;
+    window.__hlBootDone = true;
+    setTimeout(function () {
+      window.__hlCmdArmed = true;
+      window.__hlFlushTouch();
+    }, 90000);
+  };
+
   // boot-entry2.js
   window.bootHL = async function(zipBytes, extrasBytes, canvas) {
     console.log("[bootHL] start");
@@ -17616,6 +17629,22 @@ ${e}`);
       } catch (e) {
       }
     }
+    // v5: device-gated autoexec (engine runs these at the safe point in init)
+    try {
+      var __isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+      var __touchCfg = window.HL_TOUCH_CFG || '';
+      if (__touchCfg) {
+        try { FS2.writeFile('/rodir/touch.cfg', __touchCfg); } catch (e) {}
+        try { FS2.writeFile('/rodir/valve/touch.cfg', __touchCfg); } catch (e) {}
+      }
+      var __ae = '';
+      try { __ae = FS2.readFile('/rodir/valve/autoexec.cfg', { encoding: 'utf8' }) || ''; } catch (e) {}
+      var __add = '\n// v5 settings\nhud_scale 2.5\nvolume 0.05\n';
+      if (__isTouch) __add += 'touch_enable 1\nexec touch.cfg\n';
+      else __add += 'vid_fullscreen 0\nvid_restart\n';
+      FS2.writeFile('/rodir/valve/autoexec.cfg', __ae + __add);
+      console.log('[bootHL] autoexec patched, touch=' + __isTouch);
+    } catch (e) { console.warn('[bootHL] autoexec patch failed', e); }
     FS2.chdir("/rodir");
     window.xash = x2;
     if (window.HL_NO_MAIN) {
@@ -17767,13 +17796,12 @@ touch_addbutton "menu" "touch_default/menu" "escape" 0.020000 0.030000 0.080000 
         try {
           var x = window.xash;
           if (!x) return;
-          if (on) {
-            var FS = x.em.FS;
-            try { FS.writeFile('/rodir/touch.cfg', window.HL_TOUCH_CFG); } catch(e) {}
-            try { FS.writeFile('/rodir/valve/touch.cfg', window.HL_TOUCH_CFG); } catch(e) {}
-            x.Cmd_ExecuteString('exec touch.cfg');
+          if (window.__hlCmdArmed) {
+            if (on) x.Cmd_ExecuteString('exec touch.cfg');
+            x.Cmd_ExecuteString('touch_enable ' + (on ? '1' : '0'));
+          } else {
+            window.__hlPendingTouch = on;
           }
-          x.Cmd_ExecuteString('touch_enable ' + (on ? '1' : '0'));
         } catch(e) { console.warn('touch setup', e); }
       }
       function setupTouch(){
@@ -17790,6 +17818,7 @@ touch_addbutton "menu" "touch_default/menu" "escape" 0.020000 0.030000 0.080000 
       }
       fitCanvas();
       await window.bootHL(PARTS.zip, PARTS.extras, c);
+      window.__hlMarkBooted();
       setupTouch();
     } catch(e) { fail(e); }
   }
